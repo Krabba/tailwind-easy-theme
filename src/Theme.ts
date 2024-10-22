@@ -104,39 +104,52 @@ export class Theme<T extends ThemeProps = ThemeProps> {
   }
 
   getCSS(theme: T, userPrefix?: string) {
-    let allCssVariables: CssVariables = {};
-    let allCssProperties: T = {} as T;
+    const keys = Object.keys(theme);
 
-    Object.keys(theme).forEach((propertyKey) => {
-      const propertyValue = theme[propertyKey];
-      if (!propertyValue) return;
+    const { cssVariables, cssProperties } = keys.reduce<{
+      cssVariables: CssVariables;
+      cssProperties: T;
+    }>(
+      (acc, propertyKey) => {
+        const propertyValue = theme[propertyKey as keyof T];
+        if (!propertyValue) return acc;
 
-      let prefix: string = camelToKebab(propertyKey);
-      let Property = ThemeProperty;
+        let prefix: string = camelToKebab(propertyKey);
+        let Property = ThemeProperty;
 
-      if (propertyKey in themePropertiesConfig) {
-        const config = themePropertiesConfig[propertyKey];
-        prefix = config.prefix ?? prefix;
-        Property = config.type ?? Property;
+        if (propertyKey in themePropertiesConfig) {
+          const config =
+            themePropertiesConfig[
+              propertyKey as keyof typeof themePropertiesConfig
+            ];
+          prefix = config?.prefix ?? prefix;
+          Property = config?.type ?? Property;
+        }
+
+        prefix = userPrefix ? `${userPrefix}-${prefix}` : prefix;
+
+        const { variables, properties } = new Property(propertyValue, {
+          prefix,
+        }).getCSS();
+
+        acc.cssVariables = {
+          ...acc.cssVariables,
+          ...variables,
+        };
+
+        acc.cssProperties[propertyKey as keyof T] = properties as any;
+
+        return acc;
+      },
+      {
+        cssVariables: {},
+        cssProperties: {} as T,
       }
-
-      prefix = userPrefix ? `${userPrefix}-${prefix}` : prefix;
-
-      const { cssVariables, cssProperties } = new Property(propertyValue, {
-        prefix,
-      }).getCSS();
-
-      allCssVariables = {
-        ...allCssVariables,
-        ...cssVariables,
-      };
-
-      allCssProperties[propertyKey as keyof T] = cssProperties as any;
-    });
+    );
 
     return {
-      cssVariables: allCssVariables,
-      cssProperties: allCssProperties,
+      cssVariables,
+      cssProperties,
     };
   }
 

@@ -20,27 +20,35 @@ export class ThemeProperty {
   }
 
   getCSS() {
-    let cssVariables: CssVariables = {};
-    let cssProperties: FlatThemePropertyConfig = {};
+    const keys = Object.keys(this.themeConfig);
 
-    Object.keys(this.themeConfig).forEach((key) => {
-      const value = this.themeConfig[key];
-      if (!value) return;
+    const { variables, properties } = keys.reduce<{
+      variables: CssVariables;
+      properties: FlatThemePropertyConfig;
+    }>(
+      (acc, key) => {
+        const value = this.themeConfig[key];
+        if (!value) return acc;
 
-      cssVariables[this.getCssVariableName(key)] = this.filterCssVariableValue({
-        themePropertyKey: key,
-        themePropertyValue: value,
-      });
+        acc.variables[this.getCssVariableName(key)] =
+          this.filterCssVariableValue({
+            themePropertyKey: key,
+            themePropertyValue: value,
+          });
 
-      cssProperties[key] = this.filterCssPropertyValue({
-        themePropertyKey: key,
-        themePropertyValue: value,
-      });
-    });
+        acc.properties[key] = this.filterCssPropertyValue({
+          themePropertyKey: key,
+          themePropertyValue: value,
+        });
+
+        return acc;
+      },
+      { variables: {}, properties: {} }
+    );
 
     return {
-      cssVariables,
-      cssProperties,
+      variables,
+      properties,
     };
   }
 

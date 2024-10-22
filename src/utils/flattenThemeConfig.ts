@@ -4,26 +4,32 @@ export function flattenThemeConfig(
   config: ThemePropertyConfig,
   keyPrefix: string = ""
 ): FlatThemePropertyConfig {
-  let flattenedThemeConfig: FlatThemePropertyConfig = {};
+  const keys = Object.keys(config);
 
-  Object.keys(config).forEach((_key) => {
-    const key = keyPrefix ? `${keyPrefix}-${_key}` : _key;
-    const value = config[_key];
-    if (!value) return;
+  const flattenedThemeConfig = keys.reduce<FlatThemePropertyConfig>(
+    (acc, _key) => {
+      const key = keyPrefix ? `${keyPrefix}-${_key}` : _key;
+      const value = config[_key];
+      if (!value) return acc;
 
-    if (typeof value === "string") {
-      flattenedThemeConfig[key] = value;
-      return;
-    }
+      if (typeof value === "string") {
+        acc[key] = value;
+        return acc;
+      }
 
-    const { DEFAULT, ...rest } = value;
-    if (DEFAULT) {
-      flattenedThemeConfig[key] = DEFAULT;
-    }
+      const { DEFAULT, ...rest } = value;
+      if (DEFAULT) {
+        acc[key] = DEFAULT;
+      }
 
-    const nestedThemeProperty = flattenThemeConfig(rest, key);
-    flattenedThemeConfig = { ...flattenedThemeConfig, ...nestedThemeProperty };
-  });
+      const nestedThemeProperty = flattenThemeConfig(rest, key);
+
+      acc = { ...acc, ...nestedThemeProperty };
+
+      return acc;
+    },
+    {}
+  );
 
   return flattenedThemeConfig;
 }
