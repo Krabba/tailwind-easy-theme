@@ -39,10 +39,34 @@ export type ThemePropertyConfig = Record<
   string,
   FlatThemePropertyConfig | string
 >;
-export type PartialThemePropertyConfig<
-  PrimaryTheme extends ThemePropertyConfig
+
+type HexCode = string | undefined;
+
+type RecursiveOptionalKeyValuePair<
+  K extends string | number | symbol,
+  V extends string | object
 > = {
-  [K in keyof PrimaryTheme]?: Partial<PrimaryTheme[K]>;
+  [Key in K]?: V extends string
+    ? HexCode
+    : V extends object
+    ? V[keyof V] extends string | object
+      ? RecursiveOptionalKeyValuePair<keyof V, V[keyof V]>
+      : never
+    : never;
+};
+
+export type PartialThemePropertyConfig<PrimaryTheme extends ThemeProps> = {
+  [K in keyof PrimaryTheme]?: PrimaryTheme[K] extends infer PrimaryThemeKey
+    ? {
+        [Key in keyof PrimaryThemeKey]?: PrimaryThemeKey[Key] extends infer Value
+          ? Value extends object
+            ? Value[keyof Value] extends string | object
+              ? RecursiveOptionalKeyValuePair<keyof Value, Value[keyof Value]>
+              : never
+            : HexCode
+          : never;
+      }
+    : never;
 };
 
 export type ThemePropertyOptions = {
@@ -52,8 +76,8 @@ export type ThemePropertyOptions = {
 // Constructor signature for classes extending ThemeProperty
 export type ThemePropertyConstructor = new (...args: any[]) => ThemeProperty;
 
-export type InternalThemePropertiesConfig = {
-  [P: keyof ThemeConfig]: {
+export type InternalThemePropertiesConfig<T extends ThemeProps> = {
+  [P in keyof T]?: {
     prefix: string;
     type: ThemePropertyConstructor;
   };

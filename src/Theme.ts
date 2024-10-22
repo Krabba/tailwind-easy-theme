@@ -20,7 +20,7 @@ import { camelToKebab } from "./utils/camelToKebab";
  *
  * TODO: consider exposing a user-facing API for configuring this themePropertiesConfig; users could create their own ThemeProperty sub-classes (like ColorProperty) to write their own value conversion logic.. would make tailwind-easy-theme incredibly flexible -- like more of a low-level theming framework
  */
-const themePropertiesConfig: InternalThemePropertiesConfig = {
+const themePropertiesConfig: InternalThemePropertiesConfig<ThemeProps> = {
   colors: {
     prefix: "",
     type: ColorProperty,
@@ -85,7 +85,7 @@ const themePropertiesConfig: InternalThemePropertiesConfig = {
     prefix: "stroke",
     type: ColorProperty,
   },
-};
+} as const;
 
 export class Theme<T extends ThemeProps = ThemeProps> {
   private userPrefix: string | undefined;
@@ -115,9 +115,12 @@ export class Theme<T extends ThemeProps = ThemeProps> {
       let Property = ThemeProperty;
 
       if (propertyKey in themePropertiesConfig) {
-        const config = themePropertiesConfig[propertyKey];
-        prefix = config.prefix ?? prefix;
-        Property = config.type ?? Property;
+        const config =
+          themePropertiesConfig[
+            propertyKey as keyof typeof themePropertiesConfig
+          ];
+        prefix = config?.prefix ?? prefix;
+        Property = config?.type ?? Property;
       }
 
       prefix = userPrefix ? `${userPrefix}-${prefix}` : prefix;
