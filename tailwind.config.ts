@@ -1,4 +1,4 @@
-import { Config } from "tailwindcss";
+import type { Config } from "tailwindcss";
 import { Theme } from "./build/index.js";
 
 const theme = new Theme({
